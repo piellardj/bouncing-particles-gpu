@@ -14,7 +14,8 @@
 #include "Camera.hpp"
 #include "ObstacleMap.hpp"
 
-class Particles// : public sf::Drawable
+/* Class for handling, updating and drawing particles */
+class Particles
 {
     public:
         Particles(unsigned int width, unsigned int height);
@@ -22,8 +23,11 @@ class Particles// : public sf::Drawable
 
         unsigned int getNbParticles() const;
 
+        /* Places particles to their initial position and
+           sets their speed to 0 */
         void initialize();
 
+        /* Allowes to change the force applied to all particles */
         void setForce (sf::Vector2f const& force);
 
         void computeNewPositions(sf::Time const& dt, ObstacleMap const& obstacleMap);
@@ -35,6 +39,7 @@ class Particles// : public sf::Drawable
         sf::Vector2f _bufferSize;
         sf::Vector2f _force;
 
+        /* Particles' positions are stored in these texture buffers */
         int _currentBufferIndex; //0 or 1 alternatively
         std::array<sf::RenderTexture, 2> _positions;
         std::array<sf::RenderTexture, 3> _velocities;
@@ -45,6 +50,7 @@ class Particles// : public sf::Drawable
         sf::Shader _updatePositionShader;
         mutable sf::Shader _displayVerticesShader;
 
+        /* Particles' color and coordinates on the buffer texture */
         GLuint _colorBufferID;
         GLuint _texCoordBufferID;
 };

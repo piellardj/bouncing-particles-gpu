@@ -95,6 +95,7 @@ Particles::Particles(unsigned int width, unsigned int height):
 
 Particles::~Particles()
 {
+    /* Don't forget to free the buffers */
     if (_colorBufferID != 0)
         GLCHECK(glDeleteBuffers(1, &_colorBufferID));
     if (_texCoordBufferID != 0)
@@ -138,8 +139,8 @@ void Particles::computeNewPositions(sf::Time const& dtime, ObstacleMap const& ob
     int nextBufferIndex = (_currentBufferIndex + 1) % 2;
 
     sf::RectangleShape square(_bufferSize);
-    float dt = 30.f * dtime.asSeconds();
-/**/
+    float dt = 30.f * dtime.asSeconds(); //30 is arbitrary
+
     _updateVelocityShader.setParameter("positions", _positions[_currentBufferIndex].getTexture());
     _updateVelocityShader.setParameter("oldVelocities", _velocities[_currentBufferIndex].getTexture());
     _updateVelocityShader.setParameter("obstacleMap", obstacleMap.getTexture());
