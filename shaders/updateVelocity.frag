@@ -50,7 +50,7 @@ vec2 getNewVelocity(const vec2 coordsOnBuffer)
     vec2 obstacleNormal = getObstacleNormal(position);
     if (length(obstacleNormal) > 0.01) {
         newVelocity = reflect(newVelocity, obstacleNormal) + dt * obstacleNormal;
-        newVelocity = newVelocity * 0.5;
+        newVelocity = newVelocity * min(1.0, 1.5/length(newVelocity));
     }
     
     return newVelocity;

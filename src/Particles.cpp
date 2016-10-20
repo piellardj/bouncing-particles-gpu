@@ -18,7 +18,7 @@
 Particles::Particles(unsigned int width, unsigned int height):
             _worldSize(width, height),
             _bufferSize(128.f, 128.f),
-            _force(0.f, -0.08f),
+            _force(0.f, -0.1f),
             _currentBufferIndex (0),
             _colorBufferID(0),
             _texCoordBufferID(0)

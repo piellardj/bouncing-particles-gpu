@@ -19,14 +19,16 @@ void main()
    
     vec2 fromCenter = gl_FragCoord.xy - newObstacleCenter;
     float distance = length(fromCenter);
-    vec2 normal = (fromCenter / distance) * step(distance, radius);
     
-    vec2 newNormal = (normal + oldNormal) * hardness;
-    
-    /* we only normalize if the vector is /= (0,0) to avoid undefined behaviour */
-    if (dot(newNormal,newNormal) > 0.001) {
-        newNormal = normalize(normal + oldNormal);
+    if (distance < radius) {
+        vec2 normal = (fromCenter / distance) * step(distance, radius);
+        
+        /* we only normalize if the vector is /= (0,0) to avoid undefined behaviour */
+        if (dot(normal,normal) > 0.001) {
+            normal = normalize(normal);
+        }
+        gl_FragColor = coordsToColor(normal * hardness, MAX_NORMAL);
+    } else {
+        gl_FragColor = oldColor;
     }
-    
-    gl_FragColor = coordsToColor(newNormal, MAX_NORMAL);
 }

@@ -26,7 +26,13 @@ void main()
     vec2 newPosition = position + dt*velocity;
     
     if (position.y < -worldSize.y/2.0) {
-        newPosition.y = worldSize.y/2.0;
+        float index = gl_FragCoord.x + gl_FragCoord.y*bufferSize.x;
+        
+        float worldLeft = -worldSize.x / 2.0;
+        float worldTop = worldSize.y / 2.0;
+    
+        newPosition = vec2(worldLeft + 2.0 * mod(index, worldSize.x),
+                           worldTop + 3.0 * floor(index / worldSize.x));
     }
     
     gl_FragColor = coordsToColor(newPosition, MAX_POSITION);
