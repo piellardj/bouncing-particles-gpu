@@ -27,6 +27,7 @@ void main()
         if (dot(normal,normal) > 0.001) {
             normal = normalize(normal);
         }
+        
         gl_FragColor = coordsToColor(normal * hardness, MAX_NORMAL);
     } else {
         gl_FragColor = oldColor;

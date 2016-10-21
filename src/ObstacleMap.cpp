@@ -40,42 +40,12 @@ ObstacleMap::ObstacleMap(unsigned int width, unsigned int height):
 
 void ObstacleMap::addCircleObstacle (sf::Vector2i const& center, float radius)
 {
-    unsigned int nextIndex = (_currentIndex + 1) % 2;
-
-    /* Blending disabled, all four components replaced */
-    sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
-    sf::RectangleShape square(_bufferSize);
-
-    _addObstacleShader.setParameter("oldObstacleMap", _buffers[_currentIndex].getTexture());
-    _addObstacleShader.setParameter("bufferSize", _bufferSize);
-    _addObstacleShader.setParameter("hardness", 1.f);
-    _addObstacleShader.setParameter("newObstacleCenter", sf::Vector2f(center.x, center.y));
-    _addObstacleShader.setParameter("radius", radius);
-
-    noBlending.shader = &_addObstacleShader;
-    _buffers[nextIndex].draw (square, noBlending);
-
-    _currentIndex = nextIndex;
+    setCircle(center, radius, true);
 }
 
 void ObstacleMap::removeCircleObstacle (sf::Vector2i const& center, float radius)
 {
-    unsigned int nextIndex = (_currentIndex + 1) % 2;
-
-    /* Blending disabled, all four components replaced */
-    sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
-    sf::RectangleShape square(_bufferSize);
-
-    _addObstacleShader.setParameter("oldObstacleMap", _buffers[_currentIndex].getTexture());
-    _addObstacleShader.setParameter("bufferSize", _bufferSize);
-    _addObstacleShader.setParameter("hardness", 0.f);
-    _addObstacleShader.setParameter("newObstacleCenter", sf::Vector2f(center.x, center.y));
-    _addObstacleShader.setParameter("radius", radius);
-
-    noBlending.shader = &_addObstacleShader;
-    _buffers[nextIndex].draw (square, noBlending);
-
-    _currentIndex = nextIndex;
+    setCircle(center, radius, false);
 }
 
 void ObstacleMap::initialize()
@@ -91,6 +61,27 @@ void ObstacleMap::initialize()
 sf::Texture const& ObstacleMap::getTexture () const
 {
     return _buffers[_currentIndex].getTexture();
+}
+
+void ObstacleMap::setCircle(sf::Vector2i const& center, float radius, bool full)
+{
+    unsigned int nextIndex = (_currentIndex + 1) % 2;
+
+    /* Blending disabled, all four components replaced */
+    sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
+    sf::RectangleShape square(_bufferSize);
+
+    float hardness = (full) ? 1.f : 0.f;
+    _addObstacleShader.setParameter("oldObstacleMap", _buffers[_currentIndex].getTexture());
+    _addObstacleShader.setParameter("bufferSize", _bufferSize);
+    _addObstacleShader.setParameter("hardness", hardness);
+    _addObstacleShader.setParameter("newObstacleCenter", sf::Vector2f(center.x, center.y));
+    _addObstacleShader.setParameter("radius", radius);
+
+    noBlending.shader = &_addObstacleShader;
+    _buffers[nextIndex].draw (square, noBlending);
+
+    _currentIndex = nextIndex;
 }
 
 void ObstacleMap::draw(sf::RenderTarget &window, sf::RenderStates states) const
