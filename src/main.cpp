@@ -40,9 +40,10 @@ int main()
 
     /* Creation of the obstacle map, initialized empty */
     ObstacleMap obstacleMap(window.getSize().x, window.getSize().y);
-    float obstacleRadius = 10.f;
+    float obstacleRadius = 20.f;
 
-    Particles particles(window.getSize().x, window.getSize().y - 1);
+    Particles particles(window.getSize().x, window.getSize().y - 1,
+                        96);
 
     /* for computing average frame per seconds */
     float total = 0.f;
@@ -91,7 +92,7 @@ int main()
         /* If a particle goes too fast, it may pass through a thin wall in one step.
            To avoid this, we set a maximum step time, and run several small steps if
            necessary */
-        const sf::Time MAX_STEP = sf::seconds(0.008f);
+        const sf::Time MAX_STEP = sf::seconds(0.005f);
         sf::Time elapsedTime = clock.getElapsedTime();
 
         while (elapsedTime > MAX_STEP) {

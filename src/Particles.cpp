@@ -3,8 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <exception>
-
-#include <iostream>
+#include <cstdlib>
 
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -15,12 +14,18 @@
 #include "Utilities.hpp"
 
 
-Particles::Particles(unsigned int width, unsigned int height):
+/* random float between 0 and 1.
+   Doesn't matter if not initialized. */
+float randomFloat ()
+{
+    return std::rand() / static_cast<float>(RAND_MAX);
+}
+
+Particles::Particles(unsigned int width, unsigned int height, unsigned int nb):
             _worldSize(width, height),
-            _bufferSize(128.f, 128.f),
+            _bufferSize(nb, nb),
             _force(0.f, -0.1f),
             _currentBufferIndex (0),
-            _colorBufferID(0),
             _texCoordBufferID(0)
 {
     sf::Vector2u bufferSize(_bufferSize.x, _bufferSize.y );
@@ -42,12 +47,12 @@ Particles::Particles(unsigned int width, unsigned int height):
 
     loadFile("shaders/computeInitialPositions.frag", fragmentShader);
     searchAndReplace("__UTILS.GLSL__", utils, fragmentShader);
-    if (!_computeInitialPositionsShader.loadFromMemory(fragmentShader, sf::Shader::Fragment))
+    if (!_initialPositionsShader.loadFromMemory(fragmentShader, sf::Shader::Fragment))
         throw std::runtime_error("unable to load shader shaders/computeInitialPositions.frag");
 
     loadFile("shaders/computeInitialVelocities.frag", fragmentShader);
     searchAndReplace("__UTILS.GLSL__", utils, fragmentShader);
-    if (!_computeInitialVelocitiesShader.loadFromMemory(fragmentShader, sf::Shader::Fragment))
+    if (!_initialVelocitiesShader.loadFromMemory(fragmentShader, sf::Shader::Fragment))
         throw std::runtime_error("unable to load shader shaders/computeInitialVelocities.frag");
 
     loadFile("shaders/updateVelocity.frag", fragmentShader);
@@ -70,22 +75,16 @@ Particles::Particles(unsigned int width, unsigned int height):
 
 
     /* Create VBO */
-    std::vector< glm::vec4 > colors (getNbParticles());
     std::vector< glm::vec2 > texCoords (getNbParticles());
 
     for (unsigned int i = 0 ; i < bufferSize.x * bufferSize.y ; ++i) {
         sf::Vector2i pos (i % bufferSize.x, i / bufferSize.x);
 
-        colors[i] = glm::vec4(1.f, 0.f, 0.f, 1.f);
         texCoords[i] = glm::vec2(static_cast<float>(pos.x) / _bufferSize.x,
-                              static_cast<float>(pos.y) / _bufferSize.y);
+                                 static_cast<float>(pos.y) / _bufferSize.y);
     }
 
     /* Activate buffer and send data to the graphics card */
-    GLCHECK(glGenBuffers(1, &_colorBufferID)); //colors
-    GLCHECK(glBindBuffer(GL_ARRAY_BUFFER,_colorBufferID));
-    GLCHECK(glBufferData(GL_ARRAY_BUFFER, colors.size()*sizeof(glm::vec4), colors.data(), GL_STATIC_DRAW));
-
     GLCHECK(glGenBuffers(1, &_texCoordBufferID)); //corresponding texture pixel coordinates
     GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, _texCoordBufferID));
     GLCHECK(glBufferData(GL_ARRAY_BUFFER, texCoords.size()*sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW));
@@ -96,15 +95,13 @@ Particles::Particles(unsigned int width, unsigned int height):
 Particles::~Particles()
 {
     /* Don't forget to free the buffers */
-    if (_colorBufferID != 0)
-        GLCHECK(glDeleteBuffers(1, &_colorBufferID));
     if (_texCoordBufferID != 0)
         GLCHECK(glDeleteBuffers(1, &_texCoordBufferID));
 }
 
 unsigned int Particles::getNbParticles() const
 {
-    return static_cast<unsigned int>(_bufferSize.x * _bufferSize.y);
+    return _bufferSize.x * _bufferSize.y;
 }
 
 void Particles::initialize()
@@ -114,14 +111,18 @@ void Particles::initialize()
     sf::RectangleShape square(_bufferSize);
 
     /* Positions */
-    _computeInitialPositionsShader.setParameter("worldSize", _worldSize);
-    _computeInitialPositionsShader.setParameter("bufferSize", _bufferSize);
-    noBlending.shader = &_computeInitialPositionsShader;
+    _initialPositionsShader.setParameter("worldSize", _worldSize);
+    _initialPositionsShader.setParameter("seed1", randomFloat() * 10.f);
+    _initialPositionsShader.setParameter("seed2", randomFloat() * 10.f);
+    noBlending.shader = &_initialPositionsShader;
     for (sf::RenderTexture &texture : _positions)
         texture.draw (square, noBlending);
 
     /* Velocities */
-    noBlending.shader = &_computeInitialVelocitiesShader;
+    _initialVelocitiesShader.setParameter("maxInitialSpeed", 1.f);
+    _initialVelocitiesShader.setParameter("seed1", randomFloat() * 10.f);
+    _initialVelocitiesShader.setParameter("seed2", randomFloat() * 10.f);
+    noBlending.shader = &_initialVelocitiesShader;
     for (sf::RenderTexture &texture : _velocities)
         texture.draw (square, noBlending);
 }
@@ -141,6 +142,7 @@ void Particles::computeNewPositions(sf::Time const& dtime, ObstacleMap const& ob
     sf::RectangleShape square(_bufferSize);
     float dt = 30.f * dtime.asSeconds(); //30 is arbitrary
 
+    /* Updates velocities */
     _updateVelocityShader.setParameter("positions", _positions[_currentBufferIndex].getTexture());
     _updateVelocityShader.setParameter("oldVelocities", _velocities[_currentBufferIndex].getTexture());
     _updateVelocityShader.setParameter("obstacleMap", obstacleMap.getTexture());
@@ -151,6 +153,7 @@ void Particles::computeNewPositions(sf::Time const& dtime, ObstacleMap const& ob
     renderStates.shader = &_updateVelocityShader;
     _velocities[nextBufferIndex].draw (square, renderStates);
 
+    /* Updates positions based on the newly computed velocities */
     _updatePositionShader.setParameter("oldPositions", _positions[_currentBufferIndex].getTexture());
     _updatePositionShader.setParameter("velocities", _velocities[nextBufferIndex].getTexture());
     _updatePositionShader.setParameter("worldSize", _worldSize);
@@ -169,15 +172,15 @@ void Particles::draw(sf::RenderWindow &window, Camera const& camera) const
     GLCHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     _displayVerticesShader.setParameter("positions", _positions[_currentBufferIndex].getTexture());
+    _displayVerticesShader.setParameter("velocities", _velocities[_currentBufferIndex].getTexture());
     sf::Shader::bind(&_displayVerticesShader);
 
     /* First we retrieve the shader program's, Attributes' and Uniforms' ID */
     GLuint displayShaderID = 0;
     GLCHECK(displayShaderID = _displayVerticesShader.getNativeHandle());
 
-    GLuint texCoordAttributeID = 0, colorAttributeID = 0, viewMatrixUniformID = 0;
+    GLuint texCoordAttributeID = 0, viewMatrixUniformID = 0;
     GLCHECK(texCoordAttributeID = glGetAttribLocation(displayShaderID, "coordsOnBuffer"));
-    GLCHECK(colorAttributeID = glGetAttribLocation(displayShaderID, "color"));
     GLCHECK(viewMatrixUniformID = glGetUniformLocation(displayShaderID, "viewMatrix"));
 
 //    std::cout << "shaderID : " << displayShaderID << std::endl;
@@ -190,11 +193,6 @@ void Particles::draw(sf::RenderWindow &window, Camera const& camera) const
     GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, _texCoordBufferID));
     GLCHECK(glEnableVertexAttribArray(texCoordAttributeID));
     GLCHECK(glVertexAttribPointer(texCoordAttributeID, 2, GL_FLOAT, GL_FALSE, 0, (void*)0));
-
-    /* Enabling color buffer */
-    GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, _colorBufferID));
-    GLCHECK(glEnableVertexAttribArray(colorAttributeID));
-    GLCHECK(glVertexAttribPointer(colorAttributeID, 4, GL_FLOAT, GL_FALSE, 0, (void*)0));
 
     GLCHECK(glPointSize(2.f));
 

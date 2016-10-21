@@ -14,10 +14,16 @@
 */
 
 
-const float MAX_SPEED = 32.0;
+const float MAX_SPEED = 16.0;
 const float MAX_POSITION = 2048.0;
 const float MAX_NORMAL = 2.0;
 
+
+/*  Used as simple rand() function, co is the seed.*/
+float random(vec2 co)
+{
+  return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 
 /* Converts value stored in two color channels
    to float value in [0, 65535] */

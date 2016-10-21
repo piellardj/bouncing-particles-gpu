@@ -15,6 +15,7 @@ uniform vec2 acceleration;
 uniform float dt;
 
 
+//utils.glsl is included manually, done in CPP code
 __UTILS.GLSL__
 
 
@@ -33,24 +34,26 @@ vec2 getAcceleration(const vec2 coordsOnBuffer)
 
 vec2 getNewVelocity(const vec2 coordsOnBuffer)
 {
+    /* Retrieve current position and velocity from buffers */
     vec2 position = colorToCoords(texture(positions, coordsOnBuffer),
                                   MAX_POSITION);
-    
     vec2 velocity = colorToCoords(texture(oldVelocities, coordsOnBuffer),
                                   MAX_SPEED);
     vec2 acceleration = getAcceleration(coordsOnBuffer);
     
-    //add current acceleration
     vec2 newVelocity = velocity + dt * acceleration;
     
+    /* Particles too low will be placed up again, with random velocity */
     if (position.y < -worldSize.y/2.0) {
-        newVelocity = vec2(0,0);
+        newVelocity = vec2(random(position * velocity) * 2 - 1, 1.0);
     }
     
+    /* If there is an obstacle, bounce on it */
     vec2 obstacleNormal = getObstacleNormal(position);
     if (length(obstacleNormal) > 0.01) {
-        newVelocity = reflect(newVelocity, obstacleNormal) + dt * obstacleNormal;
-        newVelocity = newVelocity * min(1.0, 1.5/length(newVelocity));
+        newVelocity = reflect(newVelocity, obstacleNormal);
+        newVelocity = newVelocity * min(1.0, 1.0/length(newVelocity));
+        newVelocity = newVelocity + 0.5 * obstacleNormal;
     }
     
     return newVelocity;

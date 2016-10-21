@@ -18,13 +18,14 @@
 class Particles
 {
     public:
-        Particles(unsigned int width, unsigned int height);
+        /* nb: square root of the amount of particles */
+        Particles(unsigned int width, unsigned int height, unsigned int nb=128);
         ~Particles();
 
         unsigned int getNbParticles() const;
 
-        /* Places particles to their initial position and
-           sets their speed to 0 */
+        /* Places particles to random initial position
+         * and gives them random velocity */
         void initialize();
 
         /* Allowes to change the force applied to all particles */
@@ -44,14 +45,13 @@ class Particles
         std::array<sf::RenderTexture, 2> _positions;
         std::array<sf::RenderTexture, 3> _velocities;
 
-        sf::Shader _computeInitialPositionsShader;
-        sf::Shader _computeInitialVelocitiesShader;
+        sf::Shader _initialPositionsShader;
+        sf::Shader _initialVelocitiesShader;
         sf::Shader _updateVelocityShader;
         sf::Shader _updatePositionShader;
         mutable sf::Shader _displayVerticesShader;
 
-        /* Particles' color and coordinates on the buffer texture */
-        GLuint _colorBufferID;
+        /* Particles' coordinates on the buffer texture */
         GLuint _texCoordBufferID;
 };
 

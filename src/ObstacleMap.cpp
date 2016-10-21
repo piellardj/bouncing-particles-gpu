@@ -71,10 +71,10 @@ void ObstacleMap::setCircle(sf::Vector2i const& center, float radius, bool full)
     sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
     sf::RectangleShape square(_bufferSize);
 
-    float hardness = (full) ? 1.f : 0.f;
+    float isFullObstacle = (full) ? 1 : -1;
     _addObstacleShader.setParameter("oldObstacleMap", _buffers[_currentIndex].getTexture());
     _addObstacleShader.setParameter("bufferSize", _bufferSize);
-    _addObstacleShader.setParameter("hardness", hardness);
+    _addObstacleShader.setParameter("isFullObstacle", isFullObstacle);
     _addObstacleShader.setParameter("newObstacleCenter", sf::Vector2f(center.x, center.y));
     _addObstacleShader.setParameter("radius", radius);
 

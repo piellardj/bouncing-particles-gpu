@@ -10,6 +10,7 @@ uniform vec2 bufferSize;
 uniform float dt;
 
 
+//utils.glsl is included manually, done in CPP code
 __UTILS.GLSL__
 
 
@@ -22,17 +23,16 @@ void main()
                                   MAX_POSITION);
     vec2 velocity = colorToCoords(texture(velocities, coordsOnBuffer),
                                   MAX_SPEED);
-
+    
     vec2 newPosition = position + dt*velocity;
     
+    /* Particles too low are placed randomly on top again */
     if (position.y < -worldSize.y/2.0) {
-        float index = gl_FragCoord.x + gl_FragCoord.y*bufferSize.x;
-        
         float worldLeft = -worldSize.x / 2.0;
         float worldTop = worldSize.y / 2.0;
-    
-        newPosition = vec2(worldLeft + 2.0 * mod(index, worldSize.x),
-                           worldTop + 3.0 * floor(index / worldSize.x));
+        
+        newPosition = vec2(worldLeft + random(newPosition) * worldSize.x,
+                           worldTop - random(position) * 5);
     }
     
     gl_FragColor = coordsToColor(newPosition, MAX_POSITION);
