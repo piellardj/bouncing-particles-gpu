@@ -40,7 +40,6 @@ int main()
 
     /* Creation of the obstacle map, initialized empty */
     ObstacleMap obstacleMap(window.getSize().x, window.getSize().y);
-    float obstacleRadius = 10.f;
 
     Particles particles(window.getSize().x, window.getSize().y - 1,
                         128);
@@ -73,16 +72,16 @@ int main()
                 break;
                 case sf::Event::MouseButtonPressed:
                     if (event.mouseButton.button == sf::Mouse::Left)
-                        obstacleMap.addCircleObstacle(mousePos, obstacleRadius);
-                    else if (event.mouseButton.button == sf::Mouse::Right)
-                        obstacleMap.removeCircleObstacle(mousePos, obstacleRadius);
+                        obstacleMap.addObstacle();
                 break;
                 case sf::Event::MouseMoved:
-                    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-                        obstacleMap.addCircleObstacle(mousePos, obstacleRadius);
+                    obstacleMap.mouseMoved(mousePos);
 
-                    if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-                        obstacleMap.removeCircleObstacle(mousePos, obstacleRadius);
+                    if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                        obstacleMap.addObstacle();
+                break;
+                case sf::Event::MouseWheelScrolled:
+                    obstacleMap.changeRadius(event.mouseWheelScroll.delta);
                 break;
                 default:
                 break;

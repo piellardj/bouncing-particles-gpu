@@ -7,13 +7,18 @@
 
 
 ObstacleMap::ObstacleMap(unsigned int width, unsigned int height):
-            _bufferSize(width, height),
-            _currentIndex(0)
+            MIN_RADIUS(3.f),
+            MAX_RADIUS(100.f),
+            DEFAULT_RADIUS(15.f),
+            _mousePosition(10000, 10000), //offscreen
+            _currentRadius(DEFAULT_RADIUS),
+            _bufferSize(width, height)
 {
     /* Allocation of buffers */
-    for (sf::RenderTexture& buffer : _buffers)
-        if (!buffer.create(width, height))
-            throw std::runtime_error("unable to create obstacle map buffer");
+    if (!_fixedBuffer.create(width, height))
+        throw std::runtime_error("unable to create obstacle map buffer");
+    if (!_dynamicBuffer.create(width, height))
+        throw std::runtime_error("unable to create obstacle map buffer");
 
     /* Loading of the shaders */
     std::string fragmentShader, utils;
@@ -37,51 +42,66 @@ ObstacleMap::ObstacleMap(unsigned int width, unsigned int height):
     initialize();
 }
 
-
-void ObstacleMap::addCircleObstacle (sf::Vector2i const& center, float radius)
+void ObstacleMap::mouseMoved (sf::Vector2i const& position)
 {
-    setCircle(center, radius, true);
+    _mousePosition.x = position.x;
+    _mousePosition.y = position.y;
+
+    updateDynamicBuffer();
 }
 
-void ObstacleMap::removeCircleObstacle (sf::Vector2i const& center, float radius)
+void ObstacleMap::changeRadius (float diff)
 {
-    setCircle(center, radius, false);
+    _currentRadius += diff;
+    _currentRadius = std::max(MIN_RADIUS, _currentRadius);
+    _currentRadius = std::min(MAX_RADIUS, _currentRadius);
+
+    updateDynamicBuffer();
+}
+
+void ObstacleMap::addObstacle ()
+{
+    sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
+
+    sf::Sprite dynamicSprite(_dynamicBuffer.getTexture());
+    dynamicSprite.setScale(1.f, -1.f);
+    dynamicSprite.setPosition(0.f, _dynamicBuffer.getSize().y);
+    _fixedBuffer.draw (dynamicSprite, noBlending);
 }
 
 void ObstacleMap::initialize()
 {
+    _currentRadius = DEFAULT_RADIUS;
+
     /* Blending disabled, all four components replaced */
     sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
     sf::RectangleShape square(_bufferSize);
 
+    /* Clear fixed obstacles buffer */
     noBlending.shader = &_initShader;
-    _buffers[_currentIndex].draw (square, noBlending);
+    _fixedBuffer.draw (square, noBlending);
+
+    updateDynamicBuffer();
 }
 
 sf::Texture const& ObstacleMap::getTexture () const
 {
-    return _buffers[_currentIndex].getTexture();
+    return _dynamicBuffer.getTexture();
 }
 
-void ObstacleMap::setCircle(sf::Vector2i const& center, float radius, bool full)
+void ObstacleMap::updateDynamicBuffer()
 {
-    unsigned int nextIndex = (_currentIndex + 1) % 2;
-
-    /* Blending disabled, all four components replaced */
     sf::RenderStates noBlending(sf::BlendMode(sf::BlendMode::One, sf::BlendMode::Zero));
+
+    /* Add mouse obstacle to fixed obstacles buffer */
     sf::RectangleShape square(_bufferSize);
 
-    float isFullObstacle = (full) ? 1 : -1;
-    _addObstacleShader.setParameter("oldObstacleMap", _buffers[_currentIndex].getTexture());
+    _addObstacleShader.setParameter("oldObstacleMap", _fixedBuffer.getTexture());
     _addObstacleShader.setParameter("bufferSize", _bufferSize);
-    _addObstacleShader.setParameter("isFullObstacle", isFullObstacle);
-    _addObstacleShader.setParameter("newObstacleCenter", sf::Vector2f(center.x, center.y));
-    _addObstacleShader.setParameter("radius", radius);
-
+    _addObstacleShader.setParameter("newObstacleCenter", _mousePosition);
+    _addObstacleShader.setParameter("radius", _currentRadius);
     noBlending.shader = &_addObstacleShader;
-    _buffers[nextIndex].draw (square, noBlending);
-
-    _currentIndex = nextIndex;
+    _dynamicBuffer.draw (square, noBlending);
 }
 
 void ObstacleMap::draw(sf::RenderTarget &window, sf::RenderStates states) const

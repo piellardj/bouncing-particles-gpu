@@ -18,8 +18,12 @@ class ObstacleMap: public sf::Drawable
     public:
         ObstacleMap(unsigned int width, unsigned int height);
 
-        void addCircleObstacle (sf::Vector2i const& center, float radius);
-        void removeCircleObstacle (sf::Vector2i const& center, float radius);
+        /* Moves or changes the radius of the mouse linked obstacle */
+        void mouseMoved (sf::Vector2i const& position);
+        void changeRadius (float diff);
+
+        /* Adds from the fixed obstacles map the mouse obstacle */
+        void addObstacle ();
 
         /* Initializes the obstacle map to be empty */
         void initialize();
@@ -27,18 +31,25 @@ class ObstacleMap: public sf::Drawable
         sf::Texture const& getTexture () const;
 
     private:
-        /* Changes a circle on the obstacle map to be full or empty */
-        void setCircle (sf::Vector2i const& center, float radius, bool full);
+        /* Recomputes the dynamic buffer */
+        void updateDynamicBuffer ();
 
         /* Inherited from sf::Drawable. */
         void draw(sf::RenderTarget &window, sf::RenderStates states) const;
 
 
     private:
+        const float MIN_RADIUS;
+        const float MAX_RADIUS;
+        const float DEFAULT_RADIUS;
+
+        sf::Vector2f _mousePosition;
+        float _currentRadius;
+
         sf::Vector2f _bufferSize;
 
-        unsigned int _currentIndex;
-        std::array<sf::RenderTexture, 2> _buffers;
+        sf::RenderTexture _fixedBuffer; //fixed obstacles
+        sf::RenderTexture _dynamicBuffer; //fixed obstacles + mouse obstacle
 
         sf::Shader _initShader;
         sf::Shader _addObstacleShader;
