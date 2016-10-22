@@ -45,7 +45,7 @@ void main()
         float worldTop = worldSize.y / 2.0;
         
         newPosition = vec2(worldLeft + random(newPosition) * worldSize.x,
-                           worldTop - random(position) * 5);
+                           worldTop - random(position) * 15);
     }
     
     gl_FragColor = coordsToColor(newPosition, MAX_POSITION);

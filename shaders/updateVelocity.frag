@@ -23,8 +23,14 @@ vec2 getObstacleNormal (const vec2 position)
 {
     vec2 coordsOnObstacleMap = position / worldSize + vec2(0.5, 0.5);
     
-    return colorToCoords(texture(obstacleMap, coordsOnObstacleMap),
-                         MAX_NORMAL);
+    if (coordsOnObstacleMap.x < 0.0 || coordsOnObstacleMap.x > 1.0) {
+        return vec2(0, 0);
+    } else if (coordsOnObstacleMap.y < 0.0 || coordsOnObstacleMap.y > 1.0) {
+        return vec2(0, 0);
+    } else {
+        return colorToCoords(texture(obstacleMap, coordsOnObstacleMap),
+                             MAX_NORMAL);
+     }
 }
 
 vec2 getAcceleration(const vec2 coordsOnBuffer)
@@ -45,14 +51,15 @@ vec2 getNewVelocity(const vec2 coordsOnBuffer)
     
     /* Particles too low will be placed up again, with random velocity */
     if (position.y < -worldSize.y/2.0) {
-        newVelocity = vec2(random(position * velocity) * 2 - 1, 1.0);
+        newVelocity = vec2(random(100 * position) * 2 - 1,
+                           1.0);
     }
     
-    /* If there is an obstacle, bounce on it */
+    /* If there is an obstacle, bounce on it with limited speed */
     vec2 obstacleNormal = getObstacleNormal(position);
     if (length(obstacleNormal) > 0.01) {
         newVelocity = reflect(newVelocity, obstacleNormal);
-        newVelocity = newVelocity * min(1.0, 0.5/length(newVelocity));
+        newVelocity = newVelocity * min(1.0, 0.8/length(newVelocity));
     }
     
     return newVelocity;
