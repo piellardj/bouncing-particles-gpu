@@ -19,7 +19,7 @@ int main()
     sf::ContextSettings openGLContext(0, 0, 0, //no depth, no stencil, no antialiasing
                                       3, 0, //openGL 3.0 requested
                                       sf::ContextSettings::Default);
-    sf::RenderWindow window(sf::VideoMode(400, 600), "Particles",
+    sf::RenderWindow window(sf::VideoMode(400, 600), "Bouncing Particles",
                             sf::Style::Titlebar | sf::Style::Close,
                             openGLContext);
     window.setVerticalSyncEnabled(true);
@@ -107,8 +107,6 @@ int main()
         particles.draw(window, camera);
         window.draw(obstacleMap);
         window.display();
-
-       // std::cout << 1.f / clock.getElapsedTime().asSeconds() << std::endl;
     }
 
     std::cout << "average fps: " << static_cast<float>(loops) / total << std::endl;
