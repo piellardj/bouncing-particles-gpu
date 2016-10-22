@@ -6,7 +6,7 @@ uniform sampler2D velocities;
 
 uniform mat3 viewMatrix;
 
-uniform vec4 colorSlow = vec4(1.0, 0.8, 0.8, 1.0);
+uniform vec4 colorSlow = vec4(1.0, 0.9, 0.9, 1.0);
 uniform vec4 colorFast = vec4(1.0, 0.0, 0.0, 1.0);
 
 attribute vec2 coordsOnBuffer;
