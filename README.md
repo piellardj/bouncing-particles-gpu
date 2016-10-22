@@ -1,10 +1,11 @@
 # bouncing-particles
 Particle collisions system running on GPU using OpenGL shaders.
-
+Handles 1 million particles at 60 fps on my integrated Intel HD Graphics chip.
 
 # Description
-Particle system running on the GPU. The only force applying to particles is gravity.
-You can draw with left mouse button obstacles on which the particles rebound. Right mouse button erases obstacles. R key resets the simulation.
+Particle system running on the GPU.
+The particles appear on top of the screen and are regenerated when they disappear at tthe bottm. The only force appplied to particles is gravity.
+You can draw with left mouse button obstacles on which the particles bounce. R key resets the simulation.
 
 Particles' positions and velocities are stored in textures. Each component is stored in 2 channels of a pixel (making it possible to store 65534 values).
 
