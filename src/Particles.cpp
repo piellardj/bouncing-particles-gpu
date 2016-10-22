@@ -156,6 +156,7 @@ void Particles::computeNewPositions(sf::Time const& dtime, ObstacleMap const& ob
     /* Updates positions based on the newly computed velocities */
     _updatePositionShader.setParameter("oldPositions", _positions[_currentBufferIndex].getTexture());
     _updatePositionShader.setParameter("velocities", _velocities[nextBufferIndex].getTexture());
+    _updatePositionShader.setParameter("obstacleMap", obstacleMap.getTexture());
     _updatePositionShader.setParameter("worldSize", _worldSize);
     _updatePositionShader.setParameter("bufferSize", _bufferSize);
     _updatePositionShader.setParameter("dt", dt);

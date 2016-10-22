@@ -40,10 +40,10 @@ int main()
 
     /* Creation of the obstacle map, initialized empty */
     ObstacleMap obstacleMap(window.getSize().x, window.getSize().y);
-    float obstacleRadius = 20.f;
+    float obstacleRadius = 10.f;
 
     Particles particles(window.getSize().x, window.getSize().y - 1,
-                        96);
+                        128);
 
     /* for computing average frame per seconds */
     float total = 0.f;
