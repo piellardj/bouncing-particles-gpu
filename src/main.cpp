@@ -12,11 +12,12 @@
 #include "Particles.hpp"
 #include "Camera.hpp"
 
+
 int main()
 {
     /* Creation of the fixed dimensions window and the OpenGL 3+ context */
     sf::ContextSettings openGLContext(0, 0, 0, //no depth, no stencil, no antialiasing
-                                      3, 0, //openGL 3.3 requested
+                                      3, 0, //openGL 3.0 requested
                                       sf::ContextSettings::Default);
     sf::RenderWindow window(sf::VideoMode(400, 600), "Particles",
                             sf::Style::Titlebar | sf::Style::Close,
@@ -59,10 +60,6 @@ int main()
             switch (event.type) {
                 case sf::Event::Closed:
                     window.close();
-                break;
-                case sf::Event::Resized:
-                    glViewport(0, 0, event.size.width, event.size.height);
-                    camera.setScreenSize(window.getSize().x, window.getSize().y);
                 break;
                 case sf::Event::KeyReleased:
                     if (event.key.code == sf::Keyboard::R) {
