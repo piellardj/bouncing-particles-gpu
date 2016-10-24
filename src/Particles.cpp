@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <exception>
 #include <cstdlib>
+#include <iostream>
 
 #include <SFML/Graphics/VertexArray.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -26,7 +27,7 @@ Particles::Particles(unsigned int width, unsigned int height, unsigned int nb):
             _bufferSize(nb, nb),
             _force(0.f, -0.1f),
             _currentBufferIndex (0),
-            _texCoordBufferID(0)
+            _texCoordBufferID(-1)
 {
     sf::Vector2u bufferSize(_bufferSize.x, _bufferSize.y );
 
@@ -69,12 +70,11 @@ Particles::Particles(unsigned int width, unsigned int height, unsigned int nb):
     searchAndReplace("__UTILS.GLSL__", utils, vertexShader);
     loadFile("shaders/displayParticles.frag", fragmentShader);
     searchAndReplace("__UTILS.GLSL__", utils, fragmentShader);
-
     if (!_displayVerticesShader.loadFromMemory(vertexShader, fragmentShader))
         throw std::runtime_error("unable to load shader shaders/displayParticles.frag or shaders/displayParticles.vert");
 
 
-    /* Create VBO */
+    /* Create VBO for particles' position on buffer */
     std::vector< glm::vec2 > texCoords (getNbParticles());
 
     for (unsigned int i = 0 ; i < bufferSize.x * bufferSize.y ; ++i) {
@@ -95,7 +95,7 @@ Particles::Particles(unsigned int width, unsigned int height, unsigned int nb):
 Particles::~Particles()
 {
     /* Don't forget to free the buffers */
-    if (_texCoordBufferID != 0)
+    if (_texCoordBufferID != (GLuint)(-1))
         GLCHECK(glDeleteBuffers(1, &_texCoordBufferID));
 }
 
@@ -177,12 +177,24 @@ void Particles::draw(sf::RenderWindow &window, Camera const& camera) const
     sf::Shader::bind(&_displayVerticesShader);
 
     /* First we retrieve the shader program's, Attributes' and Uniforms' ID */
-    GLuint displayShaderID = 0;
+    GLuint displayShaderID = -1;
     GLCHECK(displayShaderID = _displayVerticesShader.getNativeHandle());
+    if (displayShaderID == (GLuint)(-1)) {
+        std::cerr << "Unable to find displayShaderID" << std::endl;
+        return;
+    }
 
-    GLuint texCoordAttributeID = 0, viewMatrixUniformID = 0;
+    GLuint texCoordAttributeID = -1, viewMatrixUniformID = -1;
     GLCHECK(texCoordAttributeID = glGetAttribLocation(displayShaderID, "coordsOnBuffer"));
+    if (texCoordAttributeID == (GLuint)(-1)) {
+        std::cerr << "Unable to find texCoordAttributeID" << std::endl;
+        return;
+    }
     GLCHECK(viewMatrixUniformID = glGetUniformLocation(displayShaderID, "viewMatrix"));
+    if (viewMatrixUniformID == (GLuint)(-1)) {
+        std::cerr << "Unable to find viewMatrixUniformID" << std::endl;
+        return;
+    }
 
 //    std::cout << "shaderID : " << displayShaderID << std::endl;
 //    std::cout << "texCoord ; color ; viewMatrix  ->  " << texCoordAttributeID << " ; " << colorAttributeID << " ; " << viewMatrixUniformID << std::endl;
@@ -202,8 +214,9 @@ void Particles::draw(sf::RenderWindow &window, Camera const& camera) const
 
     /* Don't forget to unbind buffers */
     GLCHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCHECK(glDisableVertexAttribArray(texCoordAttributeID));
 
-
+    /* Displays the positions texture buffer, for debugging purposes */
 //    window.setActive(true);
 //    window.pushGLStates();
 //
@@ -212,6 +225,5 @@ void Particles::draw(sf::RenderWindow &window, Camera const& camera) const
 //    sprite.setPosition(10,10);
 //    window.draw(sprite);
 //
-//    window.display();
 //    window.popGLStates();
 }
