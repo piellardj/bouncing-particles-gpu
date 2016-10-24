@@ -37,10 +37,10 @@ cleanall:
 	rm -rf obj/* bin/$(EXEC)
 
 run: bin/$(EXEC)
-	export LD_LIBRARY_PATH=extlibs/SFML-2.3.2/lib ; bin/$(EXEC)
+	export LD_LIBRARY_PATH=$(SFML_PATH)/lib ; bin/$(EXEC)
 
 run_gdb: bin/$(EXEC)
-	gdb bin/$(EXEC)
+	export LD_LIBRARY_PATH=$(SFML_PATH)/lib ; gdb bin/$(EXEC)
 
 run_valgrind: bin/$(EXEC)
-	valgrind --leak-check=full bin/$(EXEC)
+	export LD_LIBRARY_PATH=$(SFML_PATH)/lib ; valgrind --leak-check=full bin/$(EXEC)
